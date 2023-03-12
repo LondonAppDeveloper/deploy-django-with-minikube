@@ -1,3 +1,18 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: django-postgres-pvc
+  labels:
+    app: django
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,12 +32,20 @@ spec:
         app: django
         tier: postgres
     spec:
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: django-postgres-pvc
+
       containers:
         - image: postgres:15.2
           name: postgres
           ports:
             - containerPort: 5432
               name: postgres
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
           env:
             - name: POSTGRES_DB
               value: djangodb
